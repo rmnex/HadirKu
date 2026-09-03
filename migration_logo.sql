@@ -7,7 +7,7 @@
 
 create table if not exists app_settings (
   id int primary key default 1,
-  app_name text not null default 'HADIR S2',
+  app_name text not null default 'HadirKu',
   logo_url text,
   updated_at timestamptz not null default now(),
   constraint single_row check (id = 1)

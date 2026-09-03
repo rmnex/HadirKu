@@ -1,5 +1,5 @@
 // =========================================================
-// HADIR S2 - Logika Halaman Admin (Ketua Kelas)
+// HadirKu - Logika Halaman Admin (Ketua Kelas)
 // =========================================================
 
 const loginView = document.getElementById("loginView");
@@ -10,7 +10,7 @@ let activeSession = null;
 let allStudents = [];
 let allCourses = [];
 let attendanceChannel = null;
-let currentAppSettings = { app_name: "HADIR S2", logo_url: null };
+let currentAppSettings = { app_name: "HadirKu", logo_url: null };
 let currentRiwayatDetail = null; // { courseName, meetingNumber, date, rows }
 let currentRekapData = null; // { sessions, students, attendanceRows }
 
@@ -191,7 +191,7 @@ document.getElementById("openSessionBtn").addEventListener("click", async () => 
 
 document.getElementById("closeSessionBtn").addEventListener("click", async () => {
   if (!activeSession) return;
-  if (!confirm("Tutup sesi absensi ini?")) return;
+  if (!confirm("Tutup sesi presensi ini?")) return;
   await supabaseClient
     .from("sessions")
     .update({ status: "closed", closed_at: new Date().toISOString() })
@@ -328,10 +328,22 @@ async function loadRiwayat() {
   body.innerHTML = rows.join("");
 }
 
+// Urutkan mahasiswa berdasarkan NIM (naik). Yang belum punya NIM ditaruh di akhir, diurutkan nama.
+function sortStudentsByNim(students) {
+  return [...students].sort((a, b) => {
+    const nimA = (a.nim || "").toString().trim();
+    const nimB = (b.nim || "").toString().trim();
+    if (!nimA && !nimB) return a.name.localeCompare(b.name, "id");
+    if (!nimA) return 1;
+    if (!nimB) return -1;
+    return nimA.localeCompare(nimB, "id", { numeric: true });
+  });
+}
+
 async function showRiwayatDetail(sessionId) {
   const { data: sessionRow } = await supabaseClient
     .from("sessions")
-    .select("id, meeting_number, opened_at, course_id, courses(name)")
+    .select("id, meeting_number, opened_at, course_id, courses(name, lecturer)")
     .eq("id", sessionId)
     .single();
 
@@ -343,12 +355,13 @@ async function showRiwayatDetail(sessionId) {
   const attendanceMap = {};
   (attendanceRows || []).forEach((a) => (attendanceMap[a.student_id] = a));
 
-  const activeStudents = allStudents.filter((s) => s.is_active);
+  const activeStudents = sortStudentsByNim(allStudents.filter((s) => s.is_active));
   const rows = activeStudents
     .map((s, idx) => {
       const a = attendanceMap[s.id];
       return `<tr>
         <td>${idx + 1}</td>
+        <td>${escapeHtml(s.nim || "-")}</td>
         <td>${escapeHtml(s.name)}</td>
         <td>${a ? "✅ Hadir" : "⏳ Belum"}</td>
         <td>${a ? (a.attendance_mode === "luring" ? "Luring" : "Daring") : "-"}</td>
@@ -364,12 +377,14 @@ async function showRiwayatDetail(sessionId) {
   // Simpan versi data mentah (bukan HTML) untuk dipakai saat export PDF
   currentRiwayatDetail = {
     courseName: sessionRow && sessionRow.courses ? sessionRow.courses.name : "-",
+    lecturerName: sessionRow && sessionRow.courses ? sessionRow.courses.lecturer : null,
     meetingNumber: sessionRow ? sessionRow.meeting_number : "-",
     date: sessionRow ? formatTanggalWITA(sessionRow.opened_at) : "-",
     rows: activeStudents.map((s, idx) => {
       const a = attendanceMap[s.id];
       return [
         String(idx + 1),
+        s.nim || "-",
         s.name,
         a ? "Hadir" : "Belum",
         a ? (a.attendance_mode === "luring" ? "Luring" : "Daring") : "-",
@@ -390,7 +405,7 @@ async function loadRekap() {
     .from("attendance")
     .select("student_id, session_id");
 
-  const activeStudents = allStudents.filter((s) => s.is_active);
+  const activeStudents = sortStudentsByNim(allStudents.filter((s) => s.is_active));
   const sessionList = sessions || [];
 
   currentRekapData = {
@@ -402,7 +417,7 @@ async function loadRekap() {
   // Header
   const head = document.getElementById("rekapHead");
   head.innerHTML =
-    "<th>Nama</th>" +
+    "<th>NIM</th><th>Nama</th>" +
     sessionList.map((s) => `<th>P${s.meeting_number}</th>`).join("") +
     "<th>Total</th><th>%</th>";
 
@@ -421,7 +436,7 @@ async function loadRekap() {
         })
         .join("");
       const pct = sessionList.length ? ((total / sessionList.length) * 100).toFixed(1) : "0.0";
-      return `<tr><td>${escapeHtml(student.name)}</td>${cells}<td>${total}</td><td>${pct}%</td></tr>`;
+      return `<tr><td>${escapeHtml(student.nim || "-")}</td><td>${escapeHtml(student.name)}</td>${cells}<td>${total}</td><td>${pct}%</td></tr>`;
     })
     .join("");
 }
@@ -532,25 +547,82 @@ async function imageUrlToDataUrl(url) {
   }
 }
 
-async function addPdfHeader(doc, subtitle) {
-  let cursorY = 15;
+// Kop surat di bagian atas PDF: logo + nama aplikasi + subjudul + garis pemisah
+async function addPdfHeader(doc, title, subtitle) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let textX = 14;
+
   if (currentAppSettings.logo_url) {
     const dataUrl = await imageUrlToDataUrl(currentAppSettings.logo_url);
     if (dataUrl) {
       try {
-        doc.addImage(dataUrl, "PNG", 14, 10, 18, 18);
+        doc.addImage(dataUrl, "PNG", 14, 10, 20, 20);
+        textX = 40;
       } catch (e) {
         console.error("Gagal menambahkan logo ke PDF", e);
       }
     }
   }
-  doc.setFontSize(14);
-  doc.text(currentAppSettings.app_name || "HADIR S2", 38, 18);
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text(subtitle, 38, 24);
+
+  doc.setFont(undefined, "bold");
+  doc.setFontSize(15);
+  doc.setTextColor(20);
+  doc.text(currentAppSettings.app_name || "HadirKu", textX, 17);
+
+  doc.setFont(undefined, "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(60);
+  doc.text(title, textX, 24);
+
+  doc.setFontSize(9);
+  doc.setTextColor(110);
+  doc.text(subtitle, textX, 29.5);
+
+  doc.setDrawColor(37, 99, 235);
+  doc.setLineWidth(0.7);
+  doc.line(14, 34, pageWidth - 14, 34);
   doc.setTextColor(0);
-  return 34;
+
+  return 40;
+}
+
+// Blok tanggal cetak + tanda tangan dosen (dan ketua kelas) di bagian bawah PDF
+function addPdfSignatureBlock(doc, finalY, lecturerName) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const todayStr = new Date().toLocaleDateString("id-ID", {
+    timeZone: "Asia/Makassar",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  let y = finalY + 16;
+  const blockHeight = 40;
+  if (y + blockHeight > pageHeight - 10) {
+    doc.addPage();
+    y = 20;
+  }
+
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.text(`Samarinda, ${todayStr}`, pageWidth - 14, y, { align: "right" });
+
+  y += 8;
+  const leftX = 20;
+  const rightX = pageWidth - 65;
+
+  doc.text("Ketua Kelas,", leftX, y);
+  doc.text("Dosen Pengampu,", rightX, y);
+
+  const signatureY = y + 24;
+  doc.setFontSize(10);
+  doc.text("(________________________)", leftX, signatureY);
+  doc.text(
+    lecturerName ? `(${lecturerName})` : "(________________________)",
+    rightX,
+    signatureY
+  );
 }
 
 document.getElementById("exportRiwayatPdfBtn").addEventListener("click", async () => {
@@ -559,17 +631,20 @@ document.getElementById("exportRiwayatPdfBtn").addEventListener("click", async (
   const doc = new jsPDF();
 
   const subtitle = `${currentRiwayatDetail.courseName} · Pertemuan ${currentRiwayatDetail.meetingNumber} · ${currentRiwayatDetail.date}`;
-  const startY = await addPdfHeader(doc, subtitle);
+  const startY = await addPdfHeader(doc, "Daftar Hadir Perkuliahan", subtitle);
 
   doc.autoTable({
     startY,
-    head: [["No", "Nama", "Status", "Mode", "Jam"]],
+    head: [["No", "NIM", "Nama", "Status", "Mode", "Jam"]],
     body: currentRiwayatDetail.rows,
     styles: { fontSize: 9 },
     headStyles: { fillColor: [37, 99, 235] },
+    columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 28 } },
   });
 
-  doc.save(`riwayat-${currentRiwayatDetail.courseName}-P${currentRiwayatDetail.meetingNumber}.pdf`.replace(/\s+/g, "_"));
+  addPdfSignatureBlock(doc, doc.lastAutoTable.finalY, currentRiwayatDetail.lecturerName);
+
+  doc.save(`presensi-${currentRiwayatDetail.courseName}-P${currentRiwayatDetail.meetingNumber}.pdf`.replace(/\s+/g, "_"));
 });
 
 document.getElementById("exportRekapPdfBtn").addEventListener("click", async () => {
@@ -577,9 +652,9 @@ document.getElementById("exportRekapPdfBtn").addEventListener("click", async () 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: currentRekapData.sessions.length > 6 ? "landscape" : "portrait" });
 
-  const startY = await addPdfHeader(doc, "Rekap Kehadiran Seluruh Sesi");
+  const startY = await addPdfHeader(doc, "Rekap Kehadiran", `Seluruh sesi · diurutkan berdasarkan NIM`);
 
-  const head = [["Nama", ...currentRekapData.sessions.map((s) => `P${s.meeting_number}`), "Total", "%"]];
+  const head = [["NIM", "Nama", ...currentRekapData.sessions.map((s) => `P${s.meeting_number}`), "Total", "%"]];
   const body = currentRekapData.students.map((student) => {
     let total = 0;
     const cells = currentRekapData.sessions.map((s) => {
@@ -592,7 +667,7 @@ document.getElementById("exportRekapPdfBtn").addEventListener("click", async () 
     const pct = currentRekapData.sessions.length
       ? ((total / currentRekapData.sessions.length) * 100).toFixed(1)
       : "0.0";
-    return [student.name, ...cells, String(total), `${pct}%`];
+    return [student.nim || "-", student.name, ...cells, String(total), `${pct}%`];
   });
 
   doc.autoTable({
@@ -602,6 +677,10 @@ document.getElementById("exportRekapPdfBtn").addEventListener("click", async () 
     styles: { fontSize: 9 },
     headStyles: { fillColor: [37, 99, 235] },
   });
+
+  // Rekap bisa mencakup beberapa mata kuliah/dosen berbeda, jadi kolom
+  // tanda tangan dosen dikosongkan untuk diisi manual.
+  addPdfSignatureBlock(doc, doc.lastAutoTable.finalY, null);
 
   doc.save("rekap-kehadiran.pdf");
 });

@@ -122,6 +122,22 @@ Alur berikut sudah ditangani oleh kode di atas:
 
 Jika ada langkah yang errornya tidak sesuai (misalnya pesan RLS "permission denied"), kemungkinan besar `schema.sql` belum dijalankan penuh atau `supabase-config.js` belum diisi dengan benar.
 
+## Update: Nama HadirKu, Hindari Kata "Absensi", PDF Resmi
+
+**Ganti nama aplikasi / logo tanpa redeploy file (paling cepat):**
+Kalau aplikasi Anda sudah live, cara tercepat ganti nama & logo adalah lewat UI: Login admin → tab **Pengaturan** → ubah nama & upload logo → Simpan. Tidak perlu upload ulang file apa pun.
+
+**Kalau ingin source code-nya juga konsisten pakai "HadirKu" (untuk redeploy berikutnya):**
+Semua teks "HADIR S2" di file sudah diganti jadi "HadirKu", dan semua kata "Absensi/absensi" pada teks yang tampil ke pengguna sudah diganti jadi "Presensi/presensi" (tombol, judul, pesan error, dst).
+
+**PENTING — kalau aplikasi Anda sudah live:** pesan error dari sistem PIN ("Mode absensi tidak valid", dst) tersimpan di dalam *function* Supabase, bukan cuma di file. Supaya pesan itu ikut berubah, jalankan `migration_wording.sql` sekali di SQL Editor (aman, hanya menimpa ulang function `submit_attendance`, tidak menghapus data apa pun).
+
+**PDF sekarang:**
+- Ada **kop surat** di atas (logo + nama aplikasi + judul dokumen + garis pemisah).
+- Tabel diurutkan berdasarkan **NIM** (menaik), dengan kolom NIM ditampilkan. Mahasiswa tanpa NIM otomatis ditaruh di baris paling akhir.
+- Di bagian bawah ada **tanggal cetak** dan kolom **tanda tangan Dosen Pengampu** — untuk PDF Riwayat (per sesi), nama dosen otomatis terisi dari data mata kuliah kalau sudah diisi di tab Mata Kuliah. Untuk PDF Rekap (gabungan semua sesi, bisa beda mata kuliah/dosen), kolom tanda tangan dosen dikosongkan untuk diisi manual.
+- Supaya nama dosen otomatis muncul di tanda tangan, isi kolom "Dosen" saat menambah mata kuliah di tab **Mata Kuliah**.
+
 ## Anti Titip-Absen: PIN 4 Digit (Fitur Baru)
 
 Selain memilih nama, mahasiswa sekarang wajib memasukkan **PIN 4 digit**:

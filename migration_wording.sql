@@ -1,37 +1,10 @@
 -- =========================================================
--- MIGRASI: PIN Anti Titip-Absen
--- Jalankan file ini di SQL Editor JIKA sebelumnya Anda sudah pernah
--- menjalankan schema.sql versi lama (tanpa proteksi PIN).
--- Jika ini instalasi baru, cukup jalankan schema.sql saja — lewati file ini.
+-- MIGRASI: Update wording (hindari kata "Absensi", ganti "Presensi")
+-- Jalankan file ini di SQL Editor kalau aplikasi Anda SUDAH LIVE
+-- dan sudah pernah menjalankan schema.sql/migration_pin.sql sebelumnya.
+-- Ini hanya menimpa ULANG fungsi submit_attendance() dengan pesan
+-- error yang sudah diperbarui — tidak mengubah data yang ada.
 -- =========================================================
-
--- 1) Tabel rahasia untuk PIN (terpisah, tanpa RLS policy = tidak bisa diakses langsung)
-create table if not exists student_secrets (
-  student_id uuid primary key references students(id) on delete cascade,
-  pin_hash text,
-  pin_attempts int not null default 0,
-  pin_locked_until timestamptz
-);
-alter table student_secrets enable row level security;
-
--- 2) Cabut hak insert langsung mahasiswa (anon) ke attendance — mulai sekarang
---    presensi WAJIB lewat function submit_attendance() yang memverifikasi PIN.
-drop policy if exists "attendance_insert_if_session_open" on attendance;
-revoke insert on attendance from anon;
-
--- 3) Function-function PIN
-create or replace function check_student_pin(p_student_id uuid)
-returns boolean
-language sql
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from student_secrets
-    where student_id = p_student_id and pin_hash is not null
-  );
-$$;
-grant execute on function check_student_pin(uuid) to anon, authenticated;
 
 create or replace function submit_attendance(
   p_session_id uuid,
@@ -101,21 +74,8 @@ begin
     returning attendance.id, attendance.attended_at;
 end;
 $$;
-grant execute on function submit_attendance(uuid, uuid, text, text) to anon, authenticated;
 
-create or replace function reset_student_pin(p_student_id uuid)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  if auth.role() <> 'authenticated' then
-    raise exception 'Hanya admin yang boleh mereset PIN';
-  end if;
-  update student_secrets
-    set pin_hash = null, pin_attempts = 0, pin_locked_until = null
-    where student_id = p_student_id;
-end;
-$$;
-grant execute on function reset_student_pin(uuid) to authenticated;
+-- Opsional: kalau mau nama aplikasi di header langsung ikut berubah tanpa
+-- perlu buka tab Pengaturan, jalankan baris ini juga (boleh dilewati kalau
+-- Anda mau atur sendiri dari Admin > Pengaturan):
+-- update app_settings set app_name = 'HadirKu' where id = 1;

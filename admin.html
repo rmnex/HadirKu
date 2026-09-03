@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-<title>HADIR S2 - Admin</title>
+<title>HadirKu - Admin</title>
 <link rel="icon" href="icons/icon-192.png" />
 <meta name="theme-color" content="#2563eb" />
 <link rel="stylesheet" href="style.css" />
@@ -12,7 +12,7 @@
 
 <div class="app">
   <header class="app-header">
-    <h1><span id="brandTitle">HADIR S2</span> <span class="badge">Admin</span></h1>
+    <h1><span id="brandTitle">HadirKu</span> <span class="badge">Admin</span></h1>
     <button id="logoutBtn" class="link-btn hidden">Keluar</button>
   </header>
 
@@ -45,14 +45,14 @@
     <!-- TAB: SESI -->
     <section id="tab-sesi" class="tab-panel active">
       <div id="noActiveSession">
-        <h3>Buka Sesi Absensi</h3>
+        <h3>Buka Sesi Presensi</h3>
         <label>Mata Kuliah
           <select id="courseSelect"></select>
         </label>
         <label>Pertemuan ke-
           <input type="number" id="meetingNumber" min="1" value="1" />
         </label>
-        <button id="openSessionBtn" class="btn-primary">BUKA ABSENSI</button>
+        <button id="openSessionBtn" class="btn-primary">BUKA PRESENSI</button>
       </div>
 
       <div id="activeSessionPanel" class="hidden">
@@ -79,7 +79,7 @@
           <tbody></tbody>
         </table>
 
-        <button id="closeSessionBtn" class="btn-danger">TUTUP ABSENSI</button>
+        <button id="closeSessionBtn" class="btn-danger">TUTUP PRESENSI</button>
       </div>
     </section>
 
@@ -93,7 +93,7 @@
       <div id="riwayatDetail" class="hidden">
         <h4>Detail Sesi</h4>
         <table class="data-table">
-          <thead><tr><th>No</th><th>Nama</th><th>Status</th><th>Mode</th><th>Jam</th></tr></thead>
+          <thead><tr><th>No</th><th>NIM</th><th>Nama</th><th>Status</th><th>Mode</th><th>Jam</th></tr></thead>
           <tbody id="riwayatDetailBody"></tbody>
         </table>
         <button id="exportRiwayatPdfBtn" class="btn-secondary">📄 Export PDF</button>
@@ -105,7 +105,7 @@
       <h3>Rekap Kehadiran</h3>
       <div class="table-scroll">
         <table class="data-table" id="rekapTable">
-          <thead><tr id="rekapHead"><th>Nama</th></tr></thead>
+          <thead><tr id="rekapHead"><th>NIM</th><th>Nama</th></tr></thead>
           <tbody id="rekapBody"></tbody>
         </table>
       </div>
@@ -156,7 +156,7 @@
 
       <h3 style="margin-top:24px">Nama Aplikasi</h3>
       <label>Nama yang tampil di header
-        <input type="text" id="appNameInput" placeholder="HADIR S2" />
+        <input type="text" id="appNameInput" placeholder="HadirKu" />
       </label>
       <button id="saveAppNameBtn" class="btn-primary">Simpan Nama</button>
     </section>

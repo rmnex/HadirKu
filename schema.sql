@@ -1,5 +1,5 @@
 -- =========================================================
--- HADIR S2 — Skema Database Supabase
+-- HadirKu — Skema Database Supabase
 -- Jalankan seluruh file ini di Supabase Dashboard > SQL Editor
 -- =========================================================
 
@@ -52,7 +52,7 @@ create table if not exists attendance (
 -- Satu baris pengaturan tunggal: logo & nama aplikasi
 create table if not exists app_settings (
   id int primary key default 1,
-  app_name text not null default 'HADIR S2',
+  app_name text not null default 'HadirKu',
   logo_url text,
   updated_at timestamptz not null default now(),
   constraint single_row check (id = 1)
@@ -84,7 +84,7 @@ alter table app_settings enable row level security;
 
 -- Hak akses dasar (RLS di bawah ini yang menentukan detail izinnya)
 -- CATATAN: anon (mahasiswa) TIDAK diberi hak INSERT langsung ke tabel attendance.
--- Absensi hanya boleh masuk lewat function submit_attendance() (lihat bagian PIN di bawah)
+-- Presensi hanya boleh masuk lewat function submit_attendance() (lihat bagian PIN di bawah)
 -- supaya PIN wajib diverifikasi dulu — ini yang mencegah titip absen.
 grant select on students, courses, sessions, attendance, app_settings to anon, authenticated;
 grant insert, update, delete on students, courses, sessions, attendance, app_settings to authenticated;
@@ -109,7 +109,7 @@ create policy "sessions_write_admin" on sessions
 
 -- ATTENDANCE: semua boleh membaca (cek status "sudah absen").
 -- TIDAK ada policy INSERT untuk anon di sini secara sengaja — mahasiswa hanya
--- boleh menambah data absensi lewat function submit_attendance() (verifikasi PIN).
+-- boleh menambah data presensi lewat function submit_attendance() (verifikasi PIN).
 create policy "attendance_select_public" on attendance
   for select using (true);
 
@@ -159,7 +159,7 @@ as $$
 $$;
 grant execute on function check_student_pin(uuid) to anon, authenticated;
 
--- Verifikasi PIN lalu catat absensi. Kali pertama dipanggil untuk seorang
+-- Verifikasi PIN lalu catat presensi. Kali pertama dipanggil untuk seorang
 -- mahasiswa, PIN yang dikirim otomatis disimpan sebagai PIN miliknya.
 -- Percobaan PIN salah dibatasi 5x lalu terkunci 15 menit (anti brute-force).
 create or replace function submit_attendance(
@@ -184,12 +184,12 @@ begin
   end if;
 
   if p_mode not in ('luring', 'daring') then
-    raise exception 'Mode absensi tidak valid';
+    raise exception 'Mode presensi tidak valid';
   end if;
 
   select status into v_session_status from sessions where sessions.id = p_session_id;
   if v_session_status is distinct from 'open' then
-    raise exception 'Sesi absensi tidak aktif';
+    raise exception 'Sesi presensi tidak aktif';
   end if;
 
   insert into student_secrets (student_id) values (p_student_id)
@@ -263,20 +263,20 @@ alter publication supabase_realtime add table attendance;
 -- lewat halaman Admin > tab Mahasiswa, atau edit langsung di sini.
 -- ---------------------------------------------------------
 insert into students (name, nim) values
-  ('Mahasiswa 01', null),
-  ('Mahasiswa 02', null),
-  ('Mahasiswa 03', null),
-  ('Mahasiswa 04', null),
-  ('Mahasiswa 05', null),
-  ('Mahasiswa 06', null),
-  ('Mahasiswa 07', null),
-  ('Mahasiswa 08', null),
-  ('Mahasiswa 09', null),
-  ('Mahasiswa 10', null),
-  ('Mahasiswa 11', null),
-  ('Mahasiswa 12', null),
-  ('Mahasiswa 13', null),
-  ('Mahasiswa 14', null);
+  ('Hidayati Isro'' Imad Thoyibah', '2605078001'),
+  ('Ana Maulida Samiallahu Duana', '2605078002'),
+  ('Zahrah Aulia Nabila', '2605078003'),
+  ('Ika Novita Mulia', '2605078004'),
+  ('Roi Martin', '2605078005'),
+  ('Jogarni Maria Marta', '2605078006'),
+  ('Pidelys Lumban Gaol, S.Pd.', '2605078007'),
+  ('Siti Nur Hidayah', '2605078008'),
+  ('Baradilla Tamadara Muin', '2605078009'),
+  ('Suhaimi', '2605078010'),
+  ('Aurel Azzahra', '2605078011'),
+  ('Deswita Rehani Kuncoro', '2605078012'),
+  ('Risca Verisgayanti', '2605078013'),
+  ('Pitri Almani', '2605078014');
 
 -- ---------------------------------------------------------
 -- DATA AWAL: MATA KULIAH CONTOH

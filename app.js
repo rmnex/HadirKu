@@ -1,5 +1,5 @@
 // =========================================================
-// HADIR S2 - Logika Halaman Mahasiswa
+// HadirKu - Logika Halaman Mahasiswa
 // =========================================================
 
 const mainEl = document.getElementById("main");
@@ -62,7 +62,7 @@ function renderNoSession() {
   mainEl.innerHTML = `
     <div class="empty-state">
       <span class="icon">⏳</span>
-      <strong>Tidak ada absensi yang sedang dibuka.</strong><br/>
+      <strong>Tidak ada presensi yang sedang dibuka.</strong><br/>
       Silakan tunggu ketua kelas membuka sesi.
     </div>
   `;
@@ -72,7 +72,7 @@ function renderError(msg) {
   mainEl.innerHTML = `<div class="empty-state"><span class="icon">⚠️</span>${msg}</div>`;
 }
 
-// -------- Render: form absensi --------
+// -------- Render: form presensi --------
 async function renderForm(session) {
   const { data: students } = await supabaseClient
     .from("students")
@@ -87,7 +87,7 @@ async function renderForm(session) {
   const courseName = session.courses ? session.courses.name : "-";
 
   mainEl.innerHTML = `
-    <div class="status-banner status-open">🟢 ABSENSI DIBUKA</div>
+    <div class="status-banner status-open">🟢 PRESENSI DIBUKA</div>
     <div class="session-info">
       <div><span>Mata Kuliah</span><strong>${escapeHtml(courseName)}</strong></div>
       <div><span>Pertemuan</span><strong>${session.meeting_number}</strong></div>
@@ -206,7 +206,7 @@ function validateForm() {
   btn.disabled = !pinOk;
 }
 
-// -------- Submit absensi (verifikasi PIN lewat function di database) --------
+// -------- Submit presensi (verifikasi PIN lewat function di database) --------
 async function submitAttendance() {
   const studentId = document.getElementById("studentSelect").value;
   const pinInput = document.getElementById("pinInput");
@@ -247,7 +247,7 @@ async function submitAttendance() {
     }
 
     // Pesan error dari function (PIN salah / terkunci / sesi tidak aktif)
-    errEl.textContent = error.message || "Gagal menyimpan absensi. Silakan coba lagi.";
+    errEl.textContent = error.message || "Gagal menyimpan presensi. Silakan coba lagi.";
     errEl.classList.remove("hidden");
     btn.disabled = false;
     btn.textContent = "SAYA HADIR";
@@ -281,8 +281,8 @@ function renderConfirmation(attendance, session, alreadyDone) {
     mainEl.innerHTML = `
       <div class="confirmation">
         <div class="big-check">⚠️</div>
-        <h2 style="color:#d97706">Sudah Absen</h2>
-        <p style="color:#6b7280;margin-top:-10px">Anda sudah melakukan absensi pada sesi ini.</p>
+        <h2 style="color:#d97706">Sudah Presensi</h2>
+        <p style="color:#6b7280;margin-top:-10px">Anda sudah melakukan presensi pada sesi ini.</p>
         <div class="confirmation-details">
           <div><span>Tercatat</span><span>${formatTanggalJamWITA(attendance.attended_at)}</span></div>
         </div>
@@ -294,7 +294,7 @@ function renderConfirmation(attendance, session, alreadyDone) {
   mainEl.innerHTML = `
     <div class="confirmation">
       <div class="big-check">✅</div>
-      <h2>ABSENSI BERHASIL</h2>
+      <h2>PRESENSI BERHASIL</h2>
       <div class="confirmation-details">
         <div><span>Nama</span><span>${escapeHtml(studentName)}</span></div>
         <div><span>Mata Kuliah</span><span>${escapeHtml(courseName)}</span></div>

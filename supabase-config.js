@@ -3,8 +3,8 @@
 // Ganti dua nilai di bawah ini dengan milik proyek Supabase Anda.
 // Ambil dari: Supabase Dashboard > Project Settings > API
 // =========================================================
-const SUPABASE_URL = "https://jiqsuguyyitjfzexxkxm.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppcXN1Z3V5eWl0amZ6ZXh4a3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAxMjgsImV4cCI6MjEwNDAyNjEyOH0.zCyEYGwChos1_nyD0n_tvU3oCeSqTDQdoUz8ePjS7SU";
+const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
 
 // Jangan pernah memasukkan Service Role Key di file ini atau file manapun
 // yang dikirim ke browser/GitHub Pages. Anon key AMAN untuk publik
@@ -44,7 +44,7 @@ function formatTanggalJamWITA(isoString) {
 // Dipakai di index.html dan admin.html supaya logo tampil konsisten.
 async function loadAppSettings() {
   const { data } = await supabaseClient.from("app_settings").select("app_name, logo_url").eq("id", 1).maybeSingle();
-  return data || { app_name: "HADIR S2", logo_url: null };
+  return data || { app_name: "HadirKu", logo_url: null };
 }
 
 async function applyBrandingToHeader() {
@@ -54,6 +54,6 @@ async function applyBrandingToHeader() {
   if (settings.logo_url) {
     titleEl.innerHTML = `<img src="${settings.logo_url}" alt="${settings.app_name}" class="brand-logo" />`;
   } else {
-    titleEl.textContent = settings.app_name || "HADIR S2";
+    titleEl.textContent = settings.app_name || "HadirKu";
   }
 }

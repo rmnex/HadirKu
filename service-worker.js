@@ -1,4 +1,4 @@
-const CACHE_NAME = "hadir-s2-v1";
+const CACHE_NAME = "hadirku-v2";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
