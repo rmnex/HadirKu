@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>HADIR S2 - Admin</title>
+<link rel="icon" href="icons/icon-192.png" />
+<meta name="theme-color" content="#2563eb" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h1><span id="brandTitle">HADIR S2</span> <span class="badge">Admin</span></h1>
+    <button id="logoutBtn" class="link-btn hidden">Keluar</button>
+  </header>
+
+  <!-- LOGIN -->
+  <main id="loginView" class="card">
+    <h2>Login Ketua Kelas</h2>
+    <form id="loginForm">
+      <label>Email
+        <input type="email" id="loginEmail" required />
+      </label>
+      <label>Password
+        <input type="password" id="loginPassword" required />
+      </label>
+      <button type="submit" class="btn-primary">Masuk</button>
+      <p id="loginError" class="error-text hidden"></p>
+    </form>
+  </main>
+
+  <!-- DASHBOARD -->
+  <main id="dashboardView" class="card hidden">
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="sesi">Sesi</button>
+      <button class="tab-btn" data-tab="riwayat">Riwayat</button>
+      <button class="tab-btn" data-tab="rekap">Rekap</button>
+      <button class="tab-btn" data-tab="mahasiswa">Mahasiswa</button>
+      <button class="tab-btn" data-tab="matkul">Mata Kuliah</button>
+      <button class="tab-btn" data-tab="pengaturan">Pengaturan</button>
+    </nav>
+
+    <!-- TAB: SESI -->
+    <section id="tab-sesi" class="tab-panel active">
+      <div id="noActiveSession">
+        <h3>Buka Sesi Absensi</h3>
+        <label>Mata Kuliah
+          <select id="courseSelect"></select>
+        </label>
+        <label>Pertemuan ke-
+          <input type="number" id="meetingNumber" min="1" value="1" />
+        </label>
+        <button id="openSessionBtn" class="btn-primary">BUKA ABSENSI</button>
+      </div>
+
+      <div id="activeSessionPanel" class="hidden">
+        <div class="status-banner status-open">🟢 SESI AKTIF</div>
+        <div class="session-info">
+          <div><span>Mata Kuliah</span><strong id="infoCourse">-</strong></div>
+          <div><span>Pertemuan</span><strong id="infoMeeting">-</strong></div>
+          <div><span>Tanggal</span><strong id="infoDate">-</strong></div>
+          <div><span>Mulai</span><strong id="infoStart">-</strong></div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-box"><strong id="sumTotal">0</strong><span>mahasiswa</span></div>
+          <div class="summary-box"><strong id="sumHadir">0</strong><span>hadir</span></div>
+          <div class="summary-box"><strong id="sumLuring">0</strong><span>luring</span></div>
+          <div class="summary-box"><strong id="sumDaring">0</strong><span>daring</span></div>
+          <div class="summary-box"><strong id="sumBelum">0</strong><span>belum hadir</span></div>
+        </div>
+
+        <table class="data-table" id="attendanceTable">
+          <thead>
+            <tr><th>No</th><th>Nama</th><th>Status</th><th>Mode</th><th>Jam</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <button id="closeSessionBtn" class="btn-danger">TUTUP ABSENSI</button>
+      </div>
+    </section>
+
+    <!-- TAB: RIWAYAT -->
+    <section id="tab-riwayat" class="tab-panel">
+      <h3>Riwayat Sesi</h3>
+      <table class="data-table">
+        <thead><tr><th>Tanggal</th><th>Mata Kuliah</th><th>Pertemuan</th><th>Hadir</th></tr></thead>
+        <tbody id="riwayatBody"></tbody>
+      </table>
+      <div id="riwayatDetail" class="hidden">
+        <h4>Detail Sesi</h4>
+        <table class="data-table">
+          <thead><tr><th>No</th><th>Nama</th><th>Status</th><th>Mode</th><th>Jam</th></tr></thead>
+          <tbody id="riwayatDetailBody"></tbody>
+        </table>
+        <button id="exportRiwayatPdfBtn" class="btn-secondary">📄 Export PDF</button>
+      </div>
+    </section>
+
+    <!-- TAB: REKAP -->
+    <section id="tab-rekap" class="tab-panel">
+      <h3>Rekap Kehadiran</h3>
+      <div class="table-scroll">
+        <table class="data-table" id="rekapTable">
+          <thead><tr id="rekapHead"><th>Nama</th></tr></thead>
+          <tbody id="rekapBody"></tbody>
+        </table>
+      </div>
+      <button id="exportRekapPdfBtn" class="btn-secondary">📄 Export PDF</button>
+    </section>
+
+    <!-- TAB: MAHASISWA -->
+    <section id="tab-mahasiswa" class="tab-panel">
+      <h3>Kelola Mahasiswa</h3>
+      <form id="addStudentForm" class="inline-form">
+        <input type="text" id="newStudentName" placeholder="Nama mahasiswa" required />
+        <input type="text" id="newStudentNim" placeholder="NIM (opsional)" />
+        <button type="submit" class="btn-primary">Tambah</button>
+      </form>
+      <table class="data-table">
+        <thead><tr><th>Nama</th><th>NIM</th><th>Aktif</th><th></th></tr></thead>
+        <tbody id="studentsBody"></tbody>
+      </table>
+    </section>
+
+    <!-- TAB: MATA KULIAH -->
+    <section id="tab-matkul" class="tab-panel">
+      <h3>Kelola Mata Kuliah</h3>
+      <form id="addCourseForm" class="inline-form">
+        <input type="text" id="newCourseName" placeholder="Nama mata kuliah" required />
+        <input type="text" id="newCourseLecturer" placeholder="Dosen (opsional)" />
+        <button type="submit" class="btn-primary">Tambah</button>
+      </form>
+      <table class="data-table">
+        <thead><tr><th>Mata Kuliah</th><th>Dosen</th><th></th></tr></thead>
+        <tbody id="coursesBody"></tbody>
+      </table>
+    </section>
+
+    <!-- TAB: PENGATURAN -->
+    <section id="tab-pengaturan" class="tab-panel">
+      <h3>Logo Aplikasi</h3>
+      <div id="logoPreviewBox" class="logo-preview-box">
+        <span id="logoPreviewEmpty">Belum ada logo diunggah.</span>
+        <img id="logoPreviewImg" class="hidden" alt="Pratinjau logo" />
+      </div>
+      <label>Pilih gambar logo (PNG/JPG, maks 1 MB)
+        <input type="file" id="logoFileInput" accept="image/png, image/jpeg" />
+      </label>
+      <button id="uploadLogoBtn" class="btn-primary">Unggah Logo</button>
+      <button id="removeLogoBtn" class="btn-danger">Hapus Logo</button>
+      <p id="logoStatus" class="error-text hidden"></p>
+
+      <h3 style="margin-top:24px">Nama Aplikasi</h3>
+      <label>Nama yang tampil di header
+        <input type="text" id="appNameInput" placeholder="HADIR S2" />
+      </label>
+      <button id="saveAppNameBtn" class="btn-primary">Simpan Nama</button>
+    </section>
+  </main>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="supabase-config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

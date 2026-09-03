@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>HADIR S2</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="theme-color" content="#2563eb" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h1 id="brandTitle">HADIR S2</h1>
+    <a class="admin-link" href="admin.html">Admin</a>
+  </header>
+
+  <main id="main" class="card">
+    <!-- Konten diisi otomatis oleh app.js -->
+    <div class="loading">Memuat sesi absensi…</div>
+  </main>
+
+  <footer class="app-footer">
+    <span>Kelas MPBSI 2026 · Absensi Digital</span>
+  </footer>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>applyBrandingToHeader();</script>
+<script src="app.js"></script>
+</body>
+</html>
