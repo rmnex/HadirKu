@@ -1,20 +1,25 @@
-# HADIR S2
+# HadirKu
 
-Aplikasi absensi untuk 1 kelas (14 mahasiswa). Ketua kelas membuka sesi → mahasiswa memilih nama & mode (Luring/Daring) → tekan HADIR → tanggal/jam tercatat otomatis dari server (WITA).
+Aplikasi presensi untuk 1 kelas (14 mahasiswa). Ketua kelas membuka sesi → mahasiswa memilih nama, PIN, & mode (Luring/Daring) → tekan HADIR → tanggal/jam tercatat otomatis dari server (WITA).
 
 ## 1. Struktur Folder
 
 ```
 hadir-s2/
 ├── index.html          # Halaman mahasiswa
-├── admin.html           # Halaman ketua kelas (/admin)
-├── style.css             # Semua styling
-├── app.js                 # Logika halaman mahasiswa
-├── admin.js               # Logika halaman admin
-├── supabase-config.js     # URL & anon key Supabase (ISI SENDIRI)
-├── manifest.json           # Konfigurasi PWA
-├── service-worker.js        # Offline shell
-├── schema.sql                # Skema database + RLS + data awal (jalankan di Supabase)
+├── admin.html           # Halaman ketua kelas
+├── dosen.html            # Halaman dosen (read-only, tanpa login)
+├── style.css              # Semua styling
+├── app.js                  # Logika halaman mahasiswa
+├── admin.js                 # Logika halaman admin
+├── dosen.js                  # Logika halaman dosen
+├── pdf-utils.js                # Fungsi PDF & sorting bersama (admin.js & dosen.js)
+├── supabase-config.js            # URL & anon key Supabase (ISI SENDIRI)
+├── manifest.json                   # Konfigurasi PWA
+├── service-worker.js                 # Offline shell
+├── schema.sql                          # Skema database + RLS + data awal (instalasi baru)
+├── migration_*.sql                       # Migrasi untuk yang sudah pernah install versi lama
+├── update_mahasiswa.sql                    # Update data 14 mahasiswa jadi nama asli
 └── icons/
     ├── icon-192.png
     └── icon-512.png
@@ -121,6 +126,28 @@ Alur berikut sudah ditangani oleh kode di atas:
 4. Tutup sesi, cek apakah muncul di tab Riwayat dan Rekap.
 
 Jika ada langkah yang errornya tidak sesuai (misalnya pesan RLS "permission denied"), kemungkinan besar `schema.sql` belum dijalankan penuh atau `supabase-config.js` belum diisi dengan benar.
+
+## Akses Dosen (Read-Only, Tanpa Login)
+
+Dosen bisa melihat riwayat & rekap kehadiran mata kuliahnya sendiri lewat halaman **`dosen.html`**, tanpa perlu akun/login sama sekali (memakai data yang memang sudah bisa dibaca publik, sama seperti halaman mahasiswa).
+
+**Cara membagikan link ke dosen:**
+1. Login admin → tab **Mata Kuliah**.
+2. Klik tombol **Link Dosen** di baris mata kuliah yang mau dibagikan.
+3. Link otomatis tersalin (format: `.../dosen.html?course=<id>`) — kirim ke dosen pengampu lewat WA/email.
+
+Di halaman itu dosen bisa:
+- Melihat daftar semua sesi presensi untuk mata kuliahnya, termasuk sesi yang masih aktif.
+- Klik satu sesi untuk lihat detail siapa saja yang hadir (terurut NIM), lalu export PDF per sesi.
+- Melihat rekap kehadiran keseluruhan mata kuliah itu, lalu export PDF rekap.
+
+Dosen **tidak bisa** mengubah data apa pun (buka/tutup sesi, edit mahasiswa, dst) — halaman ini murni tampilan baca saja. Tidak perlu migrasi database untuk fitur ini.
+
+## Nonaktifkan Mahasiswa & Mata Kuliah (bukan cuma hapus)
+
+Mahasiswa atau mata kuliah yang **sudah pernah dipakai** dalam sesi presensi tidak bisa dihapus permanen (supaya riwayat lama tidak rusak) — tombol **Hapus** akan menolak dengan pesan yang jelas kalau ini terjadi. Gunakan tombol **Nonaktifkan** untuk kasus itu: nama/mata kuliah tersebut disembunyikan dari pilihan form presensi & buka sesi, tapi seluruh riwayat lamanya tetap aman dan tetap muncul di Riwayat/Rekap.
+
+Kalau aplikasi Anda sudah live, jalankan `migration_course_active.sql` sekali di SQL Editor supaya kolom status aktif untuk mata kuliah ikut tersedia (mahasiswa sudah punya ini dari awal).
 
 ## Update: Nama HadirKu, Hindari Kata "Absensi", PDF Resmi
 

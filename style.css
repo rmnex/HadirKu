@@ -219,6 +219,14 @@ select:focus, input:focus {
 }
 .logo-preview-box img { max-height: 80px; max-width: 100%; object-fit: contain; }
 
+.danger-zone-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.danger-zone-box .btn-danger { margin-top: 4px; }
+
 .btn-danger {
   width: 100%;
   background: white;

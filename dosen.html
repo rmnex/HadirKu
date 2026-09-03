@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>HadirKu - Dosen</title>
+<link rel="icon" href="icons/icon-192.png" />
+<meta name="theme-color" content="#2563eb" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h1><span id="brandTitle">HadirKu</span> <span class="badge">Dosen</span></h1>
+  </header>
+
+  <main id="main" class="card">
+    <div class="loading">Memuat data mata kuliah…</div>
+  </main>
+
+  <footer class="app-footer">
+    <span>Kelas MPBSI 2026 · Tampilan Dosen (read-only)</span>
+  </footer>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="supabase-config.js"></script>
+<script src="pdf-utils.js"></script>
+<script>applyBrandingToHeader();</script>
+<script src="dosen.js"></script>
+</body>
+</html>

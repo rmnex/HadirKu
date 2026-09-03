@@ -135,7 +135,7 @@
         <button type="submit" class="btn-primary">Tambah</button>
       </form>
       <table class="data-table">
-        <thead><tr><th>Mata Kuliah</th><th>Dosen</th><th></th></tr></thead>
+        <thead><tr><th>Mata Kuliah</th><th>Dosen</th><th>Aktif</th><th></th></tr></thead>
         <tbody id="coursesBody"></tbody>
       </table>
     </section>
@@ -159,6 +159,18 @@
         <input type="text" id="appNameInput" placeholder="HadirKu" />
       </label>
       <button id="saveAppNameBtn" class="btn-primary">Simpan Nama</button>
+
+      <h3 style="margin-top:28px;color:#dc2626">Zona Berbahaya</h3>
+      <div class="danger-zone-box">
+        <p style="font-size:13px;color:#6b7280;margin-top:0">
+          Menghapus <strong>semua sesi dan riwayat presensi</strong> yang pernah tercatat
+          (termasuk sesi yang sedang aktif kalau ada). Data mahasiswa, mata kuliah, dan
+          PIN yang sudah dibuat mahasiswa <strong>tidak</strong> ikut terhapus. Tindakan ini
+          <strong>tidak bisa dibatalkan</strong> — cocok dipakai sebelum mulai semester baru
+          atau setelah selesai uji coba.
+        </p>
+        <button id="resetHistoryBtn" class="btn-danger">Reset Riwayat Sesi &amp; Presensi</button>
+      </div>
     </section>
   </main>
 </div>
@@ -167,6 +179,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="supabase-config.js"></script>
+<script src="pdf-utils.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

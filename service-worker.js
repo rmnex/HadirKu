@@ -1,11 +1,14 @@
-const CACHE_NAME = "hadirku-v2";
+const CACHE_NAME = "hadirku-v4";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
   "./admin.html",
+  "./dosen.html",
   "./style.css",
   "./app.js",
   "./admin.js",
+  "./dosen.js",
+  "./pdf-utils.js",
   "./supabase-config.js",
   "./manifest.json",
   "./icons/icon-192.png",

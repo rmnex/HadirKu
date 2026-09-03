@@ -112,7 +112,7 @@ async function renderForm(session) {
         <span class="emoji">🏫</span>Luring
       </div>
       <div class="mode-option" data-mode="daring">
-        <span class="emoji">🏠</span>Daring
+        <span class="emoji">💻</span>Daring
       </div>
     </div>
 
@@ -274,7 +274,7 @@ async function submitAttendance() {
 // -------- Render: konfirmasi berhasil / sudah absen --------
 function renderConfirmation(attendance, session, alreadyDone) {
   const courseName = session.courses ? session.courses.name : "-";
-  const modeLabel = attendance.attendance_mode === "daring" ? "🏠 Daring" : "🏫 Luring";
+  const modeLabel = attendance.attendance_mode === "daring" ? "💻 Daring" : "🏫 Luring";
   const studentName = attendance.students ? attendance.students.name : "-";
 
   if (alreadyDone) {

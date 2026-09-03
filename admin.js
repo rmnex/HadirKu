@@ -78,8 +78,12 @@ async function loadCourses() {
   const { data } = await supabaseClient.from("courses").select("*").order("name");
   allCourses = data || [];
 
+  // Dropdown "Buka Sesi" cuma tampilkan mata kuliah yang masih aktif
   const select = document.getElementById("courseSelect");
-  select.innerHTML = allCourses.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+  select.innerHTML = allCourses
+    .filter((c) => c.is_active)
+    .map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`)
+    .join("");
 
   const body = document.getElementById("coursesBody");
   body.innerHTML = allCourses
@@ -88,7 +92,12 @@ async function loadCourses() {
     <tr>
       <td>${escapeHtml(c.name)}</td>
       <td>${escapeHtml(c.lecturer || "-")}</td>
-      <td><button class="small-btn danger" onclick="deleteCourse('${c.id}')">Hapus</button></td>
+      <td>${c.is_active ? "✅" : "❌"}</td>
+      <td>
+        <button class="small-btn" onclick="toggleCourse('${c.id}', ${c.is_active})">${c.is_active ? "Nonaktifkan" : "Aktifkan"}</button>
+        <button class="small-btn" onclick="copyLecturerLink('${c.id}', '${escapeHtml(c.name).replace(/'/g, "\\'")}')">Link Dosen</button>
+        <button class="small-btn danger" onclick="deleteCourse('${c.id}', '${escapeHtml(c.name).replace(/'/g, "\\'")}')">Hapus</button>
+      </td>
     </tr>`
     )
     .join("");
@@ -108,9 +117,41 @@ document.getElementById("addCourseForm").addEventListener("submit", async (e) =>
   }
 });
 
-async function deleteCourse(id) {
-  if (!confirm("Hapus mata kuliah ini?")) return;
-  await supabaseClient.from("courses").delete().eq("id", id);
+async function toggleCourse(id, currentActive) {
+  await supabaseClient.from("courses").update({ is_active: !currentActive }).eq("id", id);
+  await loadCourses();
+}
+
+function copyLecturerLink(courseId, courseName) {
+  const link = `${window.location.origin}${window.location.pathname.replace(/admin\.html$/, "")}dosen.html?course=${courseId}`;
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard
+      .writeText(link)
+      .then(() => alert(`Link untuk mata kuliah "${courseName}" sudah disalin:\n\n${link}\n\nKirim link ini ke dosen pengampu.`))
+      .catch(() => prompt(`Salin link ini secara manual (Ctrl+C):`, link));
+  } else {
+    prompt(`Salin link ini secara manual (Ctrl+C):`, link);
+  }
+}
+
+async function deleteCourse(id, name) {
+  if (!confirm(`Hapus permanen mata kuliah "${name}"? Ini tidak bisa dibatalkan.`)) return;
+
+  const { error } = await supabaseClient.from("courses").delete().eq("id", id);
+
+  if (error) {
+    if (error.code === "23503") {
+      alert(
+        `"${name}" tidak bisa dihapus karena sudah pernah dipakai untuk membuka sesi presensi (menghapusnya akan merusak data riwayat). Gunakan tombol "Nonaktifkan" saja supaya tidak muncul lagi di pilihan "Buka Sesi", tapi riwayat lamanya tetap aman.`
+      );
+    } else {
+      alert("Gagal menghapus mata kuliah.");
+      console.error(error);
+    }
+    return;
+  }
+
   await loadCourses();
 }
 
@@ -130,6 +171,7 @@ async function loadStudents() {
       <td>
         <button class="small-btn" onclick="toggleStudent('${s.id}', ${s.is_active})">${s.is_active ? "Nonaktifkan" : "Aktifkan"}</button>
         <button class="small-btn" onclick="resetStudentPin('${s.id}', '${escapeHtml(s.name).replace(/'/g, "\\'")}')">Reset PIN</button>
+        <button class="small-btn danger" onclick="deleteStudent('${s.id}', '${escapeHtml(s.name).replace(/'/g, "\\'")}')">Hapus</button>
       </td>
     </tr>`
     )
@@ -164,6 +206,26 @@ async function resetStudentPin(id, name) {
   } else {
     alert(`PIN untuk ${name} sudah direset.`);
   }
+}
+
+async function deleteStudent(id, name) {
+  if (!confirm(`Hapus permanen ${name}? Ini tidak bisa dibatalkan.`)) return;
+
+  const { error } = await supabaseClient.from("students").delete().eq("id", id);
+
+  if (error) {
+    if (error.code === "23503") {
+      alert(
+        `${name} tidak bisa dihapus karena sudah punya riwayat presensi tersimpan (menghapusnya akan merusak data riwayat). Gunakan tombol "Nonaktifkan" saja supaya namanya tidak muncul lagi di form presensi, tapi riwayat lamanya tetap aman.`
+      );
+    } else {
+      alert("Gagal menghapus mahasiswa.");
+      console.error(error);
+    }
+    return;
+  }
+
+  await loadStudents();
 }
 
 // ---------------- SESI ----------------
@@ -328,17 +390,7 @@ async function loadRiwayat() {
   body.innerHTML = rows.join("");
 }
 
-// Urutkan mahasiswa berdasarkan NIM (naik). Yang belum punya NIM ditaruh di akhir, diurutkan nama.
-function sortStudentsByNim(students) {
-  return [...students].sort((a, b) => {
-    const nimA = (a.nim || "").toString().trim();
-    const nimB = (b.nim || "").toString().trim();
-    if (!nimA && !nimB) return a.name.localeCompare(b.name, "id");
-    if (!nimA) return 1;
-    if (!nimB) return -1;
-    return nimA.localeCompare(nimB, "id", { numeric: true });
-  });
-}
+// sortStudentsByNim() sekarang ada di pdf-utils.js (dipakai bareng admin.js & dosen.js)
 
 async function showRiwayatDetail(sessionId) {
   const { data: sessionRow } = await supabaseClient
@@ -530,100 +582,49 @@ document.getElementById("saveAppNameBtn").addEventListener("click", async () => 
   await loadSettingsPanel();
 });
 
-// ---------------- EXPORT PDF ----------------
-async function imageUrlToDataUrl(url) {
-  try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch (e) {
-    console.error("Gagal memuat logo untuk PDF", e);
-    return null;
-  }
-}
-
-// Kop surat di bagian atas PDF: logo + nama aplikasi + subjudul + garis pemisah
-async function addPdfHeader(doc, title, subtitle) {
-  const pageWidth = doc.internal.pageSize.getWidth();
-  let textX = 14;
-
-  if (currentAppSettings.logo_url) {
-    const dataUrl = await imageUrlToDataUrl(currentAppSettings.logo_url);
-    if (dataUrl) {
-      try {
-        doc.addImage(dataUrl, "PNG", 14, 10, 20, 20);
-        textX = 40;
-      } catch (e) {
-        console.error("Gagal menambahkan logo ke PDF", e);
-      }
-    }
-  }
-
-  doc.setFont(undefined, "bold");
-  doc.setFontSize(15);
-  doc.setTextColor(20);
-  doc.text(currentAppSettings.app_name || "HadirKu", textX, 17);
-
-  doc.setFont(undefined, "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(60);
-  doc.text(title, textX, 24);
-
-  doc.setFontSize(9);
-  doc.setTextColor(110);
-  doc.text(subtitle, textX, 29.5);
-
-  doc.setDrawColor(37, 99, 235);
-  doc.setLineWidth(0.7);
-  doc.line(14, 34, pageWidth - 14, 34);
-  doc.setTextColor(0);
-
-  return 40;
-}
-
-// Blok tanggal cetak + tanda tangan dosen (dan ketua kelas) di bagian bawah PDF
-function addPdfSignatureBlock(doc, finalY, lecturerName) {
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const todayStr = new Date().toLocaleDateString("id-ID", {
-    timeZone: "Asia/Makassar",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-  let y = finalY + 16;
-  const blockHeight = 40;
-  if (y + blockHeight > pageHeight - 10) {
-    doc.addPage();
-    y = 20;
-  }
-
-  doc.setFontSize(10);
-  doc.setTextColor(0);
-  doc.text(`Samarinda, ${todayStr}`, pageWidth - 14, y, { align: "right" });
-
-  y += 8;
-  const leftX = 20;
-  const rightX = pageWidth - 65;
-
-  doc.text("Ketua Kelas,", leftX, y);
-  doc.text("Dosen Pengampu,", rightX, y);
-
-  const signatureY = y + 24;
-  doc.setFontSize(10);
-  doc.text("(________________________)", leftX, signatureY);
-  doc.text(
-    lecturerName ? `(${lecturerName})` : "(________________________)",
-    rightX,
-    signatureY
+// ---------------- ZONA BERBAHAYA: RESET RIWAYAT ----------------
+document.getElementById("resetHistoryBtn").addEventListener("click", async () => {
+  const confirmed = confirm(
+    "Yakin hapus SEMUA sesi & riwayat presensi? Data mahasiswa, mata kuliah, dan PIN tidak akan terhapus, tapi seluruh Riwayat dan Rekap akan kosong lagi. Tindakan ini TIDAK BISA DIBATALKAN."
   );
-}
+  if (!confirmed) return;
+
+  const typed = prompt('Ketik "HAPUS" (huruf besar) untuk konfirmasi terakhir:');
+  if (typed !== "HAPUS") {
+    alert("Dibatalkan — teks konfirmasi tidak cocok.");
+    return;
+  }
+
+  const btn = document.getElementById("resetHistoryBtn");
+  btn.disabled = true;
+  btn.textContent = "Menghapus…";
+
+  // Hapus semua baris sesi. Attendance ikut terhapus otomatis (ON DELETE CASCADE).
+  const { error } = await supabaseClient
+    .from("sessions")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000");
+
+  btn.disabled = false;
+  btn.textContent = "Reset Riwayat Sesi & Presensi";
+
+  if (error) {
+    alert("Gagal mereset riwayat.");
+    console.error(error);
+    return;
+  }
+
+  alert("Riwayat sesi & presensi berhasil dikosongkan.");
+  await refreshSessionPanel();
+  await loadRiwayat();
+  await loadRekap();
+  currentRiwayatDetail = null;
+  document.getElementById("riwayatDetail").classList.add("hidden");
+});
+
+// ---------------- EXPORT PDF ----------------
+// imageUrlToDataUrl, addPdfHeader, addPdfSignatureBlock, sortStudentsByNim
+// sekarang ada di pdf-utils.js (dipakai bareng admin.js & dosen.js)
 
 document.getElementById("exportRiwayatPdfBtn").addEventListener("click", async () => {
   if (!currentRiwayatDetail) return;
@@ -631,7 +632,7 @@ document.getElementById("exportRiwayatPdfBtn").addEventListener("click", async (
   const doc = new jsPDF();
 
   const subtitle = `${currentRiwayatDetail.courseName} · Pertemuan ${currentRiwayatDetail.meetingNumber} · ${currentRiwayatDetail.date}`;
-  const startY = await addPdfHeader(doc, "Daftar Hadir Perkuliahan", subtitle);
+  const startY = await pdfAddHeader(doc, currentAppSettings, subtitle);
 
   doc.autoTable({
     startY,
@@ -642,7 +643,7 @@ document.getElementById("exportRiwayatPdfBtn").addEventListener("click", async (
     columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 28 } },
   });
 
-  addPdfSignatureBlock(doc, doc.lastAutoTable.finalY, currentRiwayatDetail.lecturerName);
+  pdfAddSignatureBlock(doc, doc.lastAutoTable.finalY, currentRiwayatDetail.lecturerName);
 
   doc.save(`presensi-${currentRiwayatDetail.courseName}-P${currentRiwayatDetail.meetingNumber}.pdf`.replace(/\s+/g, "_"));
 });
@@ -652,7 +653,7 @@ document.getElementById("exportRekapPdfBtn").addEventListener("click", async () 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: currentRekapData.sessions.length > 6 ? "landscape" : "portrait" });
 
-  const startY = await addPdfHeader(doc, "Rekap Kehadiran", `Seluruh sesi · diurutkan berdasarkan NIM`);
+  const startY = await pdfAddHeader(doc, currentAppSettings, "Rekap Kehadiran · Seluruh sesi · diurutkan berdasarkan NIM");
 
   const head = [["NIM", "Nama", ...currentRekapData.sessions.map((s) => `P${s.meeting_number}`), "Total", "%"]];
   const body = currentRekapData.students.map((student) => {
@@ -680,7 +681,7 @@ document.getElementById("exportRekapPdfBtn").addEventListener("click", async () 
 
   // Rekap bisa mencakup beberapa mata kuliah/dosen berbeda, jadi kolom
   // tanda tangan dosen dikosongkan untuk diisi manual.
-  addPdfSignatureBlock(doc, doc.lastAutoTable.finalY, null);
+  pdfAddSignatureBlock(doc, doc.lastAutoTable.finalY, null);
 
   doc.save("rekap-kehadiran.pdf");
 });
