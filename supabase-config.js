@@ -51,9 +51,10 @@ async function applyBrandingToHeader() {
   const titleEl = document.getElementById("brandTitle");
   if (!titleEl) return;
   const settings = await loadAppSettings();
+  const name = settings.app_name || "HadirKu";
   if (settings.logo_url) {
-    titleEl.innerHTML = `<img src="${settings.logo_url}" alt="${settings.app_name}" class="brand-logo" />`;
+    titleEl.innerHTML = `<img src="${settings.logo_url}" alt="${name}" class="brand-logo" /><span class="brand-name">${name}</span>`;
   } else {
-    titleEl.textContent = settings.app_name || "HadirKu";
+    titleEl.textContent = name;
   }
 }

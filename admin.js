@@ -81,25 +81,26 @@ async function loadCourses() {
   // Dropdown "Buka Sesi" cuma tampilkan mata kuliah yang masih aktif
   const select = document.getElementById("courseSelect");
   select.innerHTML = allCourses
-    .filter((c) => c.is_active)
+    .filter((c) => c.is_active !== false)
     .map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`)
     .join("");
 
   const body = document.getElementById("coursesBody");
   body.innerHTML = allCourses
-    .map(
-      (c) => `
+    .map((c) => {
+      const isActive = c.is_active !== false;
+      return `
     <tr>
       <td>${escapeHtml(c.name)}</td>
       <td>${escapeHtml(c.lecturer || "-")}</td>
-      <td>${c.is_active ? "✅" : "❌"}</td>
+      <td>${isActive ? "✅" : "❌"}</td>
       <td>
-        <button class="small-btn" onclick="toggleCourse('${c.id}', ${c.is_active})">${c.is_active ? "Nonaktifkan" : "Aktifkan"}</button>
+        <button class="small-btn" onclick="toggleCourse('${c.id}', ${isActive})">${isActive ? "Nonaktifkan" : "Aktifkan"}</button>
         <button class="small-btn" onclick="copyLecturerLink('${c.id}', '${escapeHtml(c.name).replace(/'/g, "\\'")}')">Link Dosen</button>
         <button class="small-btn danger" onclick="deleteCourse('${c.id}', '${escapeHtml(c.name).replace(/'/g, "\\'")}')">Hapus</button>
       </td>
-    </tr>`
-    )
+    </tr>`;
+    })
     .join("");
 }
 
