@@ -3,8 +3,8 @@
 // Ganti dua nilai di bawah ini dengan milik proyek Supabase Anda.
 // Ambil dari: Supabase Dashboard > Project Settings > API
 // =========================================================
-const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
+const SUPABASE_URL = "https://jiqsuguyyitjfzexxkxm.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppcXN1Z3V5eWl0amZ6ZXh4a3htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NTAxMjgsImV4cCI6MjEwNDAyNjEyOH0.zCyEYGwChos1_nyD0n_tvU3oCeSqTDQdoUz8ePjS7SU";
 
 // Jangan pernah memasukkan Service Role Key di file ini atau file manapun
 // yang dikirim ke browser/GitHub Pages. Anon key AMAN untuk publik
